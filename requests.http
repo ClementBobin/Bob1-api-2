@@ -1,0 +1,139 @@
+@host = http://localhost:5000
+@matchId = 33333333-3333-3333-3333-333333333333
+
+### ---------- Auth ----------
+# Seeded accounts (Development): parent@bob1.local / Parent123!   staff@bob1.local / Staff123!   admin@bob1.local / Admin123!
+# @name loginParent
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{ "email": "parent@bob1.local", "password": "Parent123!" }
+
+###
+@parentToken = {{loginParent.response.body.accessToken}}
+
+# @name loginAdmin
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{ "email": "admin@bob1.local", "password": "Admin123!" }
+
+###
+@adminToken = {{loginAdmin.response.body.accessToken}}
+
+# @name loginStaff
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{ "email": "staff@bob1.local", "password": "Staff123!" }
+
+###
+@staffToken = {{loginStaff.response.body.accessToken}}
+
+### ---------- Parent: calendar & match ----------
+GET {{host}}/api/v1/matches
+Authorization: Bearer {{parentToken}}
+
+###
+GET {{host}}/api/v1/matches/{{matchId}}/participation
+Authorization: Bearer {{parentToken}}
+
+### ---------- Parent: register child, confirm presence, join buvette ----------
+# @name getChildren
+GET {{host}}/api/v1/family/children
+Authorization: Bearer {{parentToken}}
+
+###
+@childId = {{getChildren.response.body.$[0].id}}
+
+POST {{host}}/api/v1/matches/{{matchId}}/children/{{childId}}/registration
+Authorization: Bearer {{parentToken}}
+
+###
+POST {{host}}/api/v1/matches/{{matchId}}/presence/confirm
+Authorization: Bearer {{parentToken}}
+
+###
+# @name getParticipation
+GET {{host}}/api/v1/matches/{{matchId}}/participation
+Authorization: Bearer {{parentToken}}
+
+###
+# A parent only sees the Volunteer slot ("Buvette"), so it is the first one
+@slotId = {{getParticipation.response.body.$.slots[0].id}}
+
+POST {{host}}/api/v1/slots/{{slotId}}/join
+Authorization: Bearer {{parentToken}}
+
+### ---------- Parent: carpool ----------
+POST {{host}}/api/v1/matches/{{matchId}}/rides
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{ "seats": 3, "departureUtc": "2026-11-10T16:30:00Z", "meetingPoint": "Place de la Mairie", "notes": "Départ à l'heure !" }
+
+###
+GET {{host}}/api/v1/matches/{{matchId}}/rides
+Authorization: Bearer {{parentToken}}
+
+### ---------- Parent: commitments, ranking, notifications ----------
+GET {{host}}/api/v1/me/commitments
+Authorization: Bearer {{parentToken}}
+
+###
+GET {{host}}/api/v1/rankings
+Authorization: Bearer {{parentToken}}
+
+###
+GET {{host}}/api/v1/rankings/me/entries
+Authorization: Bearer {{parentToken}}
+
+###
+POST {{host}}/api/v1/me/push-tokens
+Authorization: Bearer {{parentToken}}
+Content-Type: application/json
+
+{ "token": "fcm-device-token", "platform": "android" }
+
+###
+GET {{host}}/api/v1/notifications
+Authorization: Bearer {{parentToken}}
+
+### ---------- Staff ----------
+GET {{host}}/api/v1/staff/open-slots
+Authorization: Bearer {{staffToken}}
+
+###
+GET {{host}}/api/v1/staff/assignments
+Authorization: Bearer {{staffToken}}
+
+### ---------- Admin ----------
+GET {{host}}/api/v1/admin/slots/urgent
+Authorization: Bearer {{adminToken}}
+
+###
+GET {{host}}/api/v1/admin/matches/{{matchId}}/participation
+Authorization: Bearer {{adminToken}}
+
+###
+GET {{host}}/api/v1/admin/ranking-rules
+Authorization: Bearer {{adminToken}}
+
+###
+GET {{host}}/api/v1/ranking-rules
+Authorization: Bearer {{adminToken}}
+
+###
+# Quick penalty: needs a family id (from GET /api/v1/admin/people -> familyId)
+POST {{host}}/api/v1/admin/penalties/quick
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "familyId": "PASTE_FAMILY_ID", "ruleKey": "penalty.no_show", "matchId": "33333333-3333-3333-3333-333333333333" }
+
+###
+POST {{host}}/api/v1/admin/notifications
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "title": "Info club", "body": "Assemblée générale vendredi 19h.", "divisionId": null }

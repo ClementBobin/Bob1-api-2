@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0" />
+    <PackageReference Include="FirebaseAdmin" Version="3.*" />
+    <ProjectReference Include="..\..\Bob1.SharedKernel\Bob1.SharedKernel.csproj" />
+    <ProjectReference Include="..\Bob1.Identity\Bob1.Identity.csproj" />
+  </ItemGroup>
+</Project>

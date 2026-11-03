@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <ProjectReference Include="..\Bob1.SharedKernel\Bob1.SharedKernel.csproj" />
+    <ProjectReference Include="..\Modules\Bob1.Club\Bob1.Club.csproj" />
+    <ProjectReference Include="..\Modules\Bob1.Identity\Bob1.Identity.csproj" />
+    <ProjectReference Include="..\Modules\Bob1.Matches\Bob1.Matches.csproj" />
+    <ProjectReference Include="..\Modules\Bob1.Carpool\Bob1.Carpool.csproj" />
+    <ProjectReference Include="..\Modules\Bob1.Participation\Bob1.Participation.csproj" />
+    <ProjectReference Include="..\Modules\Bob1.Notifications\Bob1.Notifications.csproj" />
+    <ProjectReference Include="..\Modules\Bob1.Ranking\Bob1.Ranking.csproj" />
+  </ItemGroup>
+</Project>

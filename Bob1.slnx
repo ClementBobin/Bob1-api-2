@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Bob1.Api/Bob1.Api.csproj" />
+    <Project Path="src/Bob1.SharedKernel/Bob1.SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/">
+    <Project Path="src/Modules/Bob1.Club/Bob1.Club.csproj" />
+    <Project Path="src/Modules/Bob1.Identity/Bob1.Identity.csproj" />
+    <Project Path="src/Modules/Bob1.Matches/Bob1.Matches.csproj" />
+    <Project Path="src/Modules/Bob1.Carpool/Bob1.Carpool.csproj" />
+    <Project Path="src/Modules/Bob1.Notifications/Bob1.Notifications.csproj" />
+    <Project Path="src/Modules/Bob1.Participation/Bob1.Participation.csproj" />
+    <Project Path="src/Modules/Bob1.Ranking/Bob1.Ranking.csproj" />
+  </Folder>
+</Solution>
