@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bob1.Club.Migrations
 {
     [DbContext(typeof(ClubDbContext))]
-    [Migration("20261104132615_Initial")]
+    [Migration("20261104135437_Initial")]
     partial class Initial
     {
         /// <inheritdoc />

@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bob1.Ranking.Migrations
 {
     [DbContext(typeof(RankingDbContext))]
-    [Migration("20261104132710_Initial")]
+    [Migration("20261104135541_Initial")]
     partial class Initial
     {
         /// <inheritdoc />

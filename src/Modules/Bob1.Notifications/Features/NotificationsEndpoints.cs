@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Bob1.Notifications.Features;
 
 internal sealed record PushTokenRequest(string Token, string Platform);
-internal sealed record BroadcastRequest(string Title, string Body, Guid? DivisionId, DateTime? ExpiresAtUtc = null, bool Recurring = false, bool Startup = false);
+internal sealed record BroadcastRequest(string Title, string Body, Guid? DivisionId, Guid? TeamId = null, DateTime? ExpiresAtUtc = null, bool Recurring = false, bool Startup = false);
 internal sealed record NotificationDto(Guid Id, string Title, string Body, string? DataJson, DateTime CreatedAtUtc, bool IsRead, DateTime? ExpiresAtUtc, bool Recurring, bool Startup);
 
 internal static class NotificationsEndpoints

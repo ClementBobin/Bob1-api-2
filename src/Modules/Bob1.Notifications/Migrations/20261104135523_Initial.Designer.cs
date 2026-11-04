@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bob1.Notifications.Migrations
 {
     [DbContext(typeof(NotificationsDbContext))]
-    [Migration("20261104132653_Initial")]
+    [Migration("20261104135523_Initial")]
     partial class Initial
     {
         /// <inheritdoc />

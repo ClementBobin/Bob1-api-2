@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bob1.Participation.Migrations
 {
     [DbContext(typeof(ParticipationDbContext))]
-    [Migration("20261104132701_Initial")]
+    [Migration("20261104135533_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
