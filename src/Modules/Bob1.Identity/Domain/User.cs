@@ -31,6 +31,7 @@ internal sealed class User
     public UserRoles Roles { get; private set; }
     public Guid? FamilyId { get; private set; }
     public bool IsActive { get; private set; } = true;
+    public bool SuspendedFromParticipation { get; private set; } = false;
     public DateTime CreatedAtUtc { get; private set; }
 
     public string DisplayName => $"{FirstName} {LastName}".Trim();
@@ -46,6 +47,7 @@ internal sealed class User
     public void SetFamilyId(Guid? familyId) => FamilyId = familyId;
     public void SetRoles(UserRoles roles) => Roles = roles;
     public void SetActive(bool active) => IsActive = active;
+    public void SetSuspendedFromParticipation(bool suspended) => SuspendedFromParticipation = suspended;
 }
 
 internal sealed class Family

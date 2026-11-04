@@ -4,8 +4,10 @@ namespace Bob1.Notifications.Public;
 public interface INotificationsApi
 {
     Task SendToUsersAsync(IEnumerable<Guid> userIds, string title, string body,
-        IReadOnlyDictionary<string, string>? data = null, CancellationToken ct = default);
+        IReadOnlyDictionary<string, string>? data = null, CancellationToken ct = default,
+        DateTime? expiresAtUtc = null, bool recurring = false, bool startup = false);
 
     Task SendToPersonAsync(Guid personId, string title, string body,
-        IReadOnlyDictionary<string, string>? data = null, CancellationToken ct = default);
+        IReadOnlyDictionary<string, string>? data = null, CancellationToken ct = default,
+        DateTime? expiresAtUtc = null, bool recurring = false, bool startup = false);
 }

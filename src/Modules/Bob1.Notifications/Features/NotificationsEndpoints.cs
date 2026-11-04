@@ -7,8 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace Bob1.Notifications.Features;
 
 internal sealed record PushTokenRequest(string Token, string Platform);
-internal sealed record BroadcastRequest(string Title, string Body, Guid? DivisionId);
-internal sealed record NotificationDto(Guid Id, string Title, string Body, string? DataJson, DateTime CreatedAtUtc, bool IsRead);
+internal sealed record BroadcastRequest(string Title, string Body, Guid? DivisionId, DateTime? ExpiresAtUtc = null, bool Recurring = false, bool Startup = false);
+internal sealed record NotificationDto(Guid Id, string Title, string Body, string? DataJson, DateTime CreatedAtUtc, bool IsRead, DateTime? ExpiresAtUtc, bool Recurring, bool Startup);
 
 internal static class NotificationsEndpoints
 {
@@ -46,7 +46,7 @@ internal static class NotificationsEndpoints
 
             var rows = await q.OrderByDescending(n => n.CreatedAtUtc)
                 .Skip(Math.Max(0, skip ?? 0)).Take(Math.Clamp(take ?? 30, 1, 100))
-                .Select(n => new NotificationDto(n.Id, n.Title, n.Body, n.DataJson, n.CreatedAtUtc, n.ReadAtUtc != null))
+                .Select(n => new NotificationDto(n.Id, n.Title, n.Body, n.DataJson, n.CreatedAtUtc, n.ReadAtUtc != null, n.ExpiresAtUtc, n.Recurring, n.Startup))
                 .ToListAsync(ct);
             return Results.Ok(rows);
         });
@@ -79,7 +79,7 @@ internal static class NotificationsEndpoints
 
             var recipients = await identity.GetUserIdsByDivisionAsync(r.DivisionId, ct);
             await notifications.SendToUsersAsync(recipients, r.Title.Trim(), r.Body.Trim(),
-                new Dictionary<string, string> { ["type"] = "broadcast" }, ct);
+                new Dictionary<string, string> { ["type"] = "broadcast" }, ct, r.ExpiresAtUtc, r.Recurring, r.Startup);
             return Results.Ok(new { recipients = recipients.Count });
         }).RequireAuthorization(Policies.Admin).WithTags("Notifications (admin)");
     }

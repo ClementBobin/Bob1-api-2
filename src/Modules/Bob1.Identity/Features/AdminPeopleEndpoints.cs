@@ -6,7 +6,7 @@ using Microsoft.Data.Sqlite;
 
 namespace Bob1.Identity.Features;
 
-internal sealed record PersonDto(Guid Id, string Email, string FirstName, string LastName, string[] Roles, bool IsActive, Guid? FamilyId);
+internal sealed record PersonDto(Guid Id, string Email, string FirstName, string LastName, string[] Roles, bool IsActive, bool SuspendedFromParticipation, Guid? FamilyId);
 internal sealed record UpdateRolesRequest(string[] Roles);
 internal sealed record SetActiveRequest(bool IsActive);
 internal sealed record CreatePersonRequest(string Email, string FirstName, string LastName, string[] Roles, Guid? FamilyId, string? Password);
@@ -139,10 +139,19 @@ internal static class AdminPeopleEndpoints
             await db.SaveChangesAsync(ct);
             return Results.NoContent();
         });
+
+        admin.MapPut("/{id:guid}/suspended-from-participation", async (Guid id, SetActiveRequest r, IdentityDbContext db, ICurrentUser me, CancellationToken ct) =>
+        {
+            var u = await db.Users.SingleOrDefaultAsync(x => x.Id == id, ct);
+            if (u is null) return Error.NotFound("user.not_found", "User not found.").ToProblem();
+            u.SetSuspendedFromParticipation(r.IsActive);
+            await db.SaveChangesAsync(ct);
+            return Results.NoContent();
+        });
     }
 
     private static PersonDto ToDto(User u) =>
-        new(u.Id, u.Email, u.FirstName, u.LastName, u.Roles.ToNames(), u.IsActive, u.FamilyId);
+        new(u.Id, u.Email, u.FirstName, u.LastName, u.Roles.ToNames(), u.IsActive, u.SuspendedFromParticipation, u.FamilyId);
 
     private static string NewTemporaryPassword() =>
         $"Bob1-{Convert.ToHexString(RandomNumberGenerator.GetBytes(4))}!aA";

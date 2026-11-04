@@ -29,11 +29,16 @@ internal sealed class UserNotification
     public string? DataJson { get; private set; }
     public DateTime CreatedAtUtc { get; private set; }
     public DateTime? ReadAtUtc { get; private set; }
+    public DateTime? ExpiresAtUtc { get; private set; }
+    public bool Recurring { get; private set; }
+    public bool Startup { get; private set; }
 
     private UserNotification() { }
 
-    public static UserNotification Create(Guid userId, string title, string body, string? dataJson, DateTime nowUtc) =>
-        new() { UserId = userId, Title = title, Body = body, DataJson = dataJson, CreatedAtUtc = nowUtc };
+    public static UserNotification Create(Guid userId, string title, string body, string? dataJson, DateTime nowUtc,
+        DateTime? expiresAtUtc = null, bool recurring = false, bool startup = false) =>
+        new() { UserId = userId, Title = title, Body = body, DataJson = dataJson, CreatedAtUtc = nowUtc,
+            ExpiresAtUtc = expiresAtUtc, Recurring = recurring, Startup = startup };
 
     public void MarkRead(DateTime nowUtc) => ReadAtUtc ??= nowUtc;
 }
