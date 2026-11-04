@@ -82,5 +82,46 @@ internal static class NotificationsEndpoints
                 new Dictionary<string, string> { ["type"] = "broadcast" }, ct, r.ExpiresAtUtc, r.Recurring, r.Startup);
             return Results.Ok(new { recipients = recipients.Count });
         }).RequireAuthorization(Policies.Admin).WithTags("Notifications (admin)");
+
+        // ---- Admin: list all notifications ----
+        api.MapGet("/admin/notifications", async (string? search, int? skip, int? take, NotificationsDbContext db, CancellationToken ct) =>
+        {
+            var q = db.Notifications.AsNoTracking();
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var s = search.Trim().ToLowerInvariant();
+                q = q.Where(n => n.Title.ToLower().Contains(s) || n.Body.ToLower().Contains(s));
+            }
+            var total = await q.CountAsync(ct);
+            var rows = await q.OrderByDescending(n => n.CreatedAtUtc)
+                .Skip(Math.Max(0, skip ?? 0)).Take(Math.Clamp(take ?? 100, 1, 500))
+                .Select(n => new NotificationDto(n.Id, n.Title, n.Body, n.DataJson, n.CreatedAtUtc, n.ReadAtUtc != null, n.ExpiresAtUtc, n.Recurring, n.Startup))
+                .ToListAsync(ct);
+            return Results.Ok(new { total, items = rows });
+        }).RequireAuthorization(Policies.Admin).WithTags("Notifications (admin)");
+
+        // ---- Admin: update notification ----
+        api.MapPut("/admin/notifications/{id:guid}", async (Guid id, BroadcastRequest r, NotificationsDbContext db, CancellationToken ct) =>
+        {
+            if (Guard.First(Guard.NotBlank(r.Title, "title", 200), Guard.NotBlank(r.Body, "body", 1000)) is { } err)
+                return err.ToProblem();
+
+            var n = await db.Notifications.SingleOrDefaultAsync(x => x.Id == id, ct);
+            if (n is null) return Error.NotFound("notification.not_found", "Notification not found.").ToProblem();
+
+            n.Update(r.Title.Trim(), r.Body.Trim(), r.ExpiresAtUtc, r.Recurring, r.Startup);
+            await db.SaveChangesAsync(ct);
+            return Results.Ok(new NotificationDto(n.Id, n.Title, n.Body, n.DataJson, n.CreatedAtUtc, n.ReadAtUtc != null, n.ExpiresAtUtc, n.Recurring, n.Startup));
+        }).RequireAuthorization(Policies.Admin).WithTags("Notifications (admin)");
+
+        // ---- Admin: delete notification ----
+        api.MapDelete("/admin/notifications/{id:guid}", async (Guid id, NotificationsDbContext db, CancellationToken ct) =>
+        {
+            var n = await db.Notifications.SingleOrDefaultAsync(x => x.Id == id, ct);
+            if (n is null) return Error.NotFound("notification.not_found", "Notification not found.").ToProblem();
+            db.Notifications.Remove(n);
+            await db.SaveChangesAsync(ct);
+            return Results.NoContent();
+        }).RequireAuthorization(Policies.Admin).WithTags("Notifications (admin)");
     }
 }

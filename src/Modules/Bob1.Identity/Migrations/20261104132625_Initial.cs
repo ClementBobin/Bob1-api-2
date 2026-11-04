@@ -84,6 +84,7 @@ namespace Bob1.Identity.Migrations
                     Roles = table.Column<int>(type: "INTEGER", nullable: false),
                     FamilyId = table.Column<Guid>(type: "TEXT", nullable: true),
                     IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
+                    SuspendedFromParticipation = table.Column<bool>(type: "INTEGER", nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>

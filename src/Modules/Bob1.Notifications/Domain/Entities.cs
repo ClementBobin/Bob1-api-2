@@ -41,4 +41,13 @@ internal sealed class UserNotification
             ExpiresAtUtc = expiresAtUtc, Recurring = recurring, Startup = startup };
 
     public void MarkRead(DateTime nowUtc) => ReadAtUtc ??= nowUtc;
+
+    public void Update(string title, string body, DateTime? expiresAtUtc, bool recurring, bool startup)
+    {
+        Title = title;
+        Body = body;
+        ExpiresAtUtc = expiresAtUtc;
+        Recurring = recurring;
+        Startup = startup;
+    }
 }

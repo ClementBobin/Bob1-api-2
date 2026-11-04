@@ -25,7 +25,8 @@ public sealed class MatchesModule : IModule
         var db = services.GetRequiredService<MatchesDbContext>();
         await db.Database.MigrateAsync();
 
-        if (!services.GetRequiredService<IHostEnvironment>().IsDevelopment() || await db.Matches.AnyAsync())
+        var forceSeed = services.GetRequiredService<IConfiguration>().GetValue<bool>("Database:Seed");
+        if ((!forceSeed && !services.GetRequiredService<IHostEnvironment>().IsDevelopment()) || (await db.Matches.AnyAsync() && !forceSeed))
             return;
 
         db.Matches.Add(Match.Create(ClubSeed.DivisionU13M, "U13 M", "Castelnau", true,

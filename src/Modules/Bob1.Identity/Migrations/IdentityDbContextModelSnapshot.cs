@@ -166,6 +166,9 @@ namespace Bob1.Identity.Migrations
                     b.Property<int>("Roles")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("SuspendedFromParticipation")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email")

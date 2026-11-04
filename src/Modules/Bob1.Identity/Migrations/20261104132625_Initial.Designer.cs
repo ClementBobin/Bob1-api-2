@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bob1.Identity.Migrations
 {
     [DbContext(typeof(IdentityDbContext))]
-    [Migration("20261103131132_Initial2")]
-    partial class Initial2
+    [Migration("20261104132625_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -167,6 +167,9 @@ namespace Bob1.Identity.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Roles")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("SuspendedFromParticipation")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");

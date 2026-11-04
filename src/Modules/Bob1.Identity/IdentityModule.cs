@@ -36,7 +36,8 @@ public sealed class IdentityModule : IModule
         var db = services.GetRequiredService<IdentityDbContext>();
         await db.Database.MigrateAsync();
 
-        if (!services.GetRequiredService<IHostEnvironment>().IsDevelopment() || await db.Users.AnyAsync())
+        var forceSeed = services.GetRequiredService<IConfiguration>().GetValue<bool>("Database:Seed");
+if ((!forceSeed && !services.GetRequiredService<IHostEnvironment>().IsDevelopment()) || (await db.Users.AnyAsync() && !forceSeed))
             return;
 
         // Development seed: three accounts you can log in with.

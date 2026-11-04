@@ -38,7 +38,8 @@ public sealed class ParticipationModule : IModule
         var db = services.GetRequiredService<ParticipationDbContext>();
         await db.Database.MigrateAsync();
 
-        if (!services.GetRequiredService<IHostEnvironment>().IsDevelopment() || await db.Slots.AnyAsync())
+        var forceSeed = services.GetRequiredService<IConfiguration>().GetValue<bool>("Database:Seed");
+        if ((!forceSeed && !services.GetRequiredService<IHostEnvironment>().IsDevelopment()) || (await db.Slots.AnyAsync() && !forceSeed))
             return;
 
         // Dev seed: a buvette slot (parents) and two staff slots on the seeded match.

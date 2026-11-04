@@ -4,11 +4,11 @@ using Bob1.Club.Infrastructure;
 namespace Bob1.Club.Features;
 
 internal sealed record DivisionDto(Guid Id, string Name, int SortOrder, string Category, string Gender, bool IsActive);
-internal sealed record TeamDto(Guid Id, string Name, Guid DivisionId, string? CoachName, string? LogoUrl, bool IsActive, string? TrainingLocation);
+internal sealed record TeamDto(Guid Id, string Name, Guid DivisionId, string? CoachName, Guid? CoachUserId, string? LogoUrl, bool IsActive, Guid? TrainingVenueId, string? TrainingVenueName);
 internal sealed record VenueDto(Guid Id, string Name, string? Address, string? City, string? PostalCode);
 
 internal sealed record DivisionRequest(string Name, int SortOrder, string Category, string Gender, bool IsActive);
-internal sealed record TeamRequest(string Name, Guid DivisionId, string? CoachName, string? LogoUrl, bool IsActive, string? TrainingLocation);
+internal sealed record TeamRequest(string Name, Guid DivisionId, string? CoachName, Guid? CoachUserId, string? LogoUrl, bool IsActive, Guid? TrainingVenueId);
 internal sealed record VenueRequest(string Name, string? Address, string? City, string? PostalCode);
 
 internal static class ClubEndpoints
@@ -26,7 +26,7 @@ internal static class ClubEndpoints
         {
             var q = db.Teams.AsNoTracking();
             if (divisionId is { } d) q = q.Where(t => t.DivisionId == d);
-            return Results.Ok(await q.OrderBy(t => t.Name).Select(t => new TeamDto(t.Id, t.Name, t.DivisionId, t.CoachName, t.LogoUrl, t.IsActive, t.TrainingLocation)).ToListAsync(ct));
+            return Results.Ok(await q.OrderBy(t => t.Name).Select(t => new TeamDto(t.Id, t.Name, t.DivisionId, t.CoachName, t.CoachUserId, t.LogoUrl, t.IsActive, t.TrainingVenueId, t.TrainingVenueId.HasValue ? db.Venues.Where(v => v.Id == t.TrainingVenueId).Select(v => v.Name).FirstOrDefault() : null)).ToListAsync(ct));
         });
 
         read.MapGet("/venues", async (ClubDbContext db, CancellationToken ct) =>
@@ -85,10 +85,11 @@ internal static class ClubEndpoints
             if (Guard.NotBlank(r.Name, "name", 100) is { } err) return err.ToProblem();
             if (!await db.Divisions.AnyAsync(d => d.Id == r.DivisionId, ct))
                 return Error.NotFound("division.not_found", "Division not found.").ToProblem();
-            var t = new Team { Name = r.Name.Trim(), DivisionId = r.DivisionId, CoachName = r.CoachName?.Trim(), LogoUrl = r.LogoUrl?.Trim(), IsActive = r.IsActive, TrainingLocation = r.TrainingLocation?.Trim() };
+            var t = new Team { Name = r.Name.Trim(), DivisionId = r.DivisionId, CoachName = r.CoachName?.Trim(), CoachUserId = r.CoachUserId, LogoUrl = r.LogoUrl?.Trim(), IsActive = r.IsActive, TrainingVenueId = r.TrainingVenueId };
             db.Teams.Add(t);
             await db.SaveChangesAsync(ct);
-            return Results.Created($"/api/v1/teams/{t.Id}", new TeamDto(t.Id, t.Name, t.DivisionId, t.CoachName, t.LogoUrl, t.IsActive, t.TrainingLocation));
+            var venueName = t.TrainingVenueId.HasValue ? await db.Venues.Where(v => v.Id == t.TrainingVenueId).Select(v => v.Name).FirstOrDefaultAsync(ct) : null;
+            return Results.Created($"/api/v1/teams/{t.Id}", new TeamDto(t.Id, t.Name, t.DivisionId, t.CoachName, t.CoachUserId, t.LogoUrl, t.IsActive, t.TrainingVenueId, venueName));
         });
 
         admin.MapPut("/teams/{id:guid}", async (Guid id, TeamRequest r, ClubDbContext db, CancellationToken ct) =>
@@ -101,11 +102,13 @@ internal static class ClubEndpoints
             t.Name = r.Name.Trim();
             t.DivisionId = r.DivisionId;
             t.CoachName = r.CoachName?.Trim();
+            t.CoachUserId = r.CoachUserId;
             t.LogoUrl = r.LogoUrl?.Trim();
             t.IsActive = r.IsActive;
-            t.TrainingLocation = r.TrainingLocation?.Trim();
+            t.TrainingVenueId = r.TrainingVenueId;
             await db.SaveChangesAsync(ct);
-            return Results.Ok(new TeamDto(t.Id, t.Name, t.DivisionId, t.CoachName, t.LogoUrl, t.IsActive, t.TrainingLocation));
+            var venueName = t.TrainingVenueId.HasValue ? await db.Venues.Where(v => v.Id == t.TrainingVenueId).Select(v => v.Name).FirstOrDefaultAsync(ct) : null;
+            return Results.Ok(new TeamDto(t.Id, t.Name, t.DivisionId, t.CoachName, t.CoachUserId, t.LogoUrl, t.IsActive, t.TrainingVenueId, venueName));
         });
 
         admin.MapDelete("/teams/{id:guid}", async (Guid id, ClubDbContext db, CancellationToken ct) =>

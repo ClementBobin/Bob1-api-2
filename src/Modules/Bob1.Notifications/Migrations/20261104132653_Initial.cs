@@ -36,7 +36,10 @@ namespace Bob1.Notifications.Migrations
                     Body = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
                     DataJson = table.Column<string>(type: "TEXT", nullable: true),
                     CreatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    ReadAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true)
+                    ReadAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    ExpiresAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    Recurring = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Startup = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {

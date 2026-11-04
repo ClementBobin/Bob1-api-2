@@ -17,9 +17,10 @@ internal sealed class Team
     public string Name { get; set; } = "";
     public Guid DivisionId { get; set; }
     public string? CoachName { get; set; }
+    public Guid? CoachUserId { get; set; }  // Foreign key to User if coach is a staff member
     public string? LogoUrl { get; set; }
     public bool IsActive { get; set; } = true;
-    public string? TrainingLocation { get; set; }
+    public Guid? TrainingVenueId { get; set; }  // Foreign key to Venue
 }
 
 internal sealed class Venue

@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bob1.Club.Migrations
 {
     [DbContext(typeof(ClubDbContext))]
-    [Migration("20261103123300_Initial")]
+    [Migration("20261104132615_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -60,6 +60,9 @@ namespace Bob1.Club.Migrations
                     b.Property<string>("CoachName")
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("CoachUserId")
+                        .HasColumnType("TEXT");
+
                     b.Property<Guid>("DivisionId")
                         .HasColumnType("TEXT");
 
@@ -74,7 +77,7 @@ namespace Bob1.Club.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("TrainingLocation")
+                    b.Property<Guid?>("TrainingVenueId")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

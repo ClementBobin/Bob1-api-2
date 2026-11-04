@@ -57,6 +57,9 @@ namespace Bob1.Club.Migrations
                     b.Property<string>("CoachName")
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("CoachUserId")
+                        .HasColumnType("TEXT");
+
                     b.Property<Guid>("DivisionId")
                         .HasColumnType("TEXT");
 
@@ -71,7 +74,7 @@ namespace Bob1.Club.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("TrainingLocation")
+                    b.Property<Guid?>("TrainingVenueId")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

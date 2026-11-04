@@ -35,9 +35,10 @@ namespace Bob1.Club.Migrations
                     Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     DivisionId = table.Column<Guid>(type: "TEXT", nullable: false),
                     CoachName = table.Column<string>(type: "TEXT", nullable: true),
+                    CoachUserId = table.Column<Guid>(type: "TEXT", nullable: true),
                     LogoUrl = table.Column<string>(type: "TEXT", nullable: true),
                     IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    TrainingLocation = table.Column<string>(type: "TEXT", nullable: true)
+                    TrainingVenueId = table.Column<Guid>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {

@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bob1.Carpool.Migrations
 {
     [DbContext(typeof(CarpoolDbContext))]
-    [Migration("20261103123408_Initial")]
+    [Migration("20261104132645_Initial")]
     partial class Initial
     {
         /// <inheritdoc />

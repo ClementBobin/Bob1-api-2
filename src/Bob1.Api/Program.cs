@@ -86,11 +86,18 @@ if (app.Environment.IsDevelopment())
 
 // Migrations (+ dev seed data in Development). In production set Database:MigrateOnStartup=true
 // for a single instance, or run migrations from your deployment pipeline instead.
-if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
+var seedRequested = args.Contains("--seed");
+if (seedRequested)
+{
+    builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?> { ["Database:Seed"] = "true" });
+}
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Database:MigrateOnStartup") || seedRequested)
 {
     using var scope = app.Services.CreateScope();
     foreach (var module in modules)
         await module.InitializeAsync(scope.ServiceProvider);
+    if (seedRequested)
+        Console.WriteLine("Database seeded successfully.");
 }
 
 var api = app.MapGroup("/api/v1");

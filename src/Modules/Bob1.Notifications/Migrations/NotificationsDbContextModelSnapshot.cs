@@ -64,8 +64,17 @@ namespace Bob1.Notifications.Migrations
                     b.Property<string>("DataJson")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("ExpiresAtUtc")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime?>("ReadAtUtc")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("Recurring")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Startup")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Title")
                         .IsRequired()

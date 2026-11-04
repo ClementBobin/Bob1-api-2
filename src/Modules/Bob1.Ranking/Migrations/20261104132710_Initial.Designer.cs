@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bob1.Ranking.Migrations
 {
     [DbContext(typeof(RankingDbContext))]
-    [Migration("20261103131258_Initial2")]
-    partial class Initial2
+    [Migration("20261104132710_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

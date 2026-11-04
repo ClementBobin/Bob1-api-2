@@ -22,7 +22,8 @@ public sealed class ClubModule : IModule
         var db = services.GetRequiredService<ClubDbContext>();
         await db.Database.MigrateAsync();
 
-        if (!services.GetRequiredService<IHostEnvironment>().IsDevelopment() || await db.Divisions.AnyAsync())
+        var forceSeed = services.GetRequiredService<IConfiguration>().GetValue<bool>("Database:Seed");
+        if ((!forceSeed && !services.GetRequiredService<IHostEnvironment>().IsDevelopment()) || (await db.Divisions.AnyAsync() && !forceSeed))
             return;
 
         db.Divisions.AddRange(

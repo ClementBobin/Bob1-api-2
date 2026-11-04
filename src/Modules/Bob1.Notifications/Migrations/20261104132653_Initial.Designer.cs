@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bob1.Notifications.Migrations
 {
     [DbContext(typeof(NotificationsDbContext))]
-    [Migration("20261103123422_Initial")]
+    [Migration("20261104132653_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -67,8 +67,17 @@ namespace Bob1.Notifications.Migrations
                     b.Property<string>("DataJson")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("ExpiresAtUtc")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime?>("ReadAtUtc")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("Recurring")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("Startup")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Title")
                         .IsRequired()
