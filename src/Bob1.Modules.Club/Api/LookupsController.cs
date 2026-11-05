@@ -4,9 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 namespace Bob1.Modules.Club.Api;
 
 internal sealed record LookupOption(string Value, string Label);
-internal sealed record SlotTemplateDto(string Key, string Role, string Kind);
+internal sealed record SlotTemplateDto(string Key, string Role, string Kind, int DefaultCapacity);
 
 internal sealed record LookupsDto(
+    string ClubName,
     string[] Roles,
     string[] DivisionGenders,
     string[] DivisionCategories,
@@ -26,6 +27,7 @@ internal sealed record LookupsDto(
 internal sealed class LookupsController : ApiControllerBase
 {
     private static readonly LookupsDto Value = new(
+        ClubName: "BOB1",
         Roles: ["Parent", "Staff", "Admin"],
         DivisionGenders: ["Masculin", "Féminin", "Mixte"],
         DivisionCategories: ["U11", "U13", "U15", "U17", "U18", "Senior"],
@@ -33,10 +35,10 @@ internal sealed class LookupsController : ApiControllerBase
         SlotKinds: ["Volunteer", "Staff"],
         SlotTemplates:
         [
-            new("arbitres", "Arbitres", "Staff"),
-            new("chrono", "Chrono", "Staff"),
-            new("mar", "MAR", "Staff"),
-            new("buvette", "Buvette", "Volunteer")
+            new("arbitres", "Arbitres", "Staff", 4),
+            new("chrono", "Chrono", "Staff", 1),
+            new("mar", "MAR", "Staff", 1),
+            new("buvette", "Buvette", "Volunteer", 2)
         ],
         PointCategories:
         [
