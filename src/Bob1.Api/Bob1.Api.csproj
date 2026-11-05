@@ -6,13 +6,13 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <ProjectReference Include="..\Bob1.SharedKernel\Bob1.SharedKernel.csproj" />
-    <ProjectReference Include="..\Modules\Bob1.Club\Bob1.Club.csproj" />
-    <ProjectReference Include="..\Modules\Bob1.Identity\Bob1.Identity.csproj" />
-    <ProjectReference Include="..\Modules\Bob1.Matches\Bob1.Matches.csproj" />
-    <ProjectReference Include="..\Modules\Bob1.Carpool\Bob1.Carpool.csproj" />
-    <ProjectReference Include="..\Modules\Bob1.Participation\Bob1.Participation.csproj" />
-    <ProjectReference Include="..\Modules\Bob1.Notifications\Bob1.Notifications.csproj" />
-    <ProjectReference Include="..\Modules\Bob1.Ranking\Bob1.Ranking.csproj" />
+    <ProjectReference Include="..\Bob1.Shared\Bob1.Shared.csproj" />
+    <ProjectReference Include="..\Bob1.Modules.Club\Bob1.Modules.Club.csproj" />
+    <ProjectReference Include="..\Bob1.Modules.Identity\Bob1.Modules.Identity.csproj" />
+    <ProjectReference Include="..\Bob1.Modules.Matches\Bob1.Modules.Matches.csproj" />
+    <ProjectReference Include="..\Bob1.Modules.Carpool\Bob1.Modules.Carpool.csproj" />
+    <ProjectReference Include="..\Bob1.Modules.Participation\Bob1.Modules.Participation.csproj" />
+    <ProjectReference Include="..\Bob1.Modules.Notifications\Bob1.Modules.Notifications.csproj" />
+    <ProjectReference Include="..\Bob1.Modules.Ranking\Bob1.Modules.Ranking.csproj" />
   </ItemGroup>
 </Project>

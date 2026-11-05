@@ -1,0 +1,20 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <!-- Module projects only: common usings + their own layers (Domain / Application / Infrastructure / Api). -->
+  <ItemGroup Condition="$(MSBuildProjectName.StartsWith('Bob1.Modules.'))">
+    <Using Include="Bob1.Shared" />
+    <Using Include="$(MSBuildProjectName).Domain" />
+    <Using Include="$(MSBuildProjectName).Application" />
+    <Using Include="$(MSBuildProjectName).Infrastructure" />
+    <Using Include="$(MSBuildProjectName).Api" />
+    <Using Include="Microsoft.AspNetCore.Builder" />
+    <Using Include="Microsoft.AspNetCore.Http" />
+    <Using Include="Microsoft.AspNetCore.Routing" />
+    <Using Include="Microsoft.EntityFrameworkCore" />
+    <Using Include="Microsoft.Extensions.Configuration" />
+    <Using Include="Microsoft.Extensions.DependencyInjection" />
+    <Using Include="Microsoft.Extensions.Hosting" />
+    <Using Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+</Project>

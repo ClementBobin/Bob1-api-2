@@ -1,5 +1,5 @@
 using System.Security.Claims;
-using Bob1.SharedKernel;
+using Bob1.Shared;
 
 namespace Bob1.Api;
 

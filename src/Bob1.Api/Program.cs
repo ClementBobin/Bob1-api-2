@@ -1,14 +1,13 @@
 using System.Text;
-using System.Text.Json.Serialization;
 using Bob1.Api;
-using Bob1.Carpool;
-using Bob1.Club;
-using Bob1.Identity;
-using Bob1.Matches;
-using Bob1.Notifications;
-using Bob1.Participation;
-using Bob1.Ranking;
-using Bob1.SharedKernel;
+using Bob1.Modules.Carpool;
+using Bob1.Modules.Club;
+using Bob1.Modules.Identity;
+using Bob1.Modules.Matches;
+using Bob1.Modules.Notifications;
+using Bob1.Modules.Participation;
+using Bob1.Modules.Ranking;
+using Bob1.Shared;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -27,16 +26,18 @@ IModule[] modules =
 ];
 
 // 2. Cross-cutting services.
-builder.Services.AddSharedKernel();
+builder.Services.AddShared();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
-builder.Services.ConfigureHttpJsonOptions(o =>
-{
-    o.SerializerOptions.Converters.Add(new JsonStringEnumConverter()); // "Scheduled" instead of 0
-    o.SerializerOptions.Converters.Add(new UtcDateTimeJsonConverter()); // always emit UTC ("...Z")
-});
+
+// MVC controllers live in the modules (Features/*Controller.cs); see AddModuleControllers.
+builder.Services.AddControllers()
+    .AddModuleControllers(modules.Select(m => m.GetType().Assembly));
+
+// Same JSON rules for the non-MVC pipeline (ProblemDetails from the exception handler, OpenAPI).
+builder.Services.ConfigureHttpJsonOptions(o => JsonDefaults.Configure(o.SerializerOptions));
 
 // The admin back-office is a separate origin (Next.js dev server on :3000).
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
@@ -100,8 +101,6 @@ if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Databas
         Console.WriteLine("Database seeded successfully.");
 }
 
-var api = app.MapGroup("/api/v1");
-foreach (var module in modules)
-    module.MapEndpoints(api);
+app.MapControllers();   // routes are declared on the controllers ([Route("api/v1/...")])
 
 app.Run();

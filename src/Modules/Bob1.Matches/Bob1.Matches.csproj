@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0" />
-    <ProjectReference Include="..\..\Bob1.SharedKernel\Bob1.SharedKernel.csproj" />
-    <ProjectReference Include="..\Bob1.Club\Bob1.Club.csproj" />
-    <ProjectReference Include="..\Bob1.Identity\Bob1.Identity.csproj" />
-  </ItemGroup>
-</Project>

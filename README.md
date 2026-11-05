@@ -19,7 +19,29 @@ Dev accounts: `parent@bob1.local / Parent123!`, `staff@bob1.local / Staff123!`, 
 Try the API with `requests.http` (VS Code REST Client / Rider / Visual Studio). OpenAPI: `/openapi/v1.json`.
 
 Changed an entity? `./scripts/migrations.sh <Name>`. Early on, the simplest reset is:
-delete `bob1.db`, delete every module's `Migrations/` folder, recreate `Initial`.
+delete `bob1.db`, delete every module's `Infrastructure/Migrations/` folder, recreate `Initial`.
+
+## Solution layout
+```
+src/
+├── Bob1.Api/                    # Host (Program.cs, appsettings, CurrentUser) - the only project that references every module
+├── Bob1.Shared/                 # Cross-cutting, no business logic
+│   ├── Events/                  # IDomainEvent, handler + dispatcher
+│   ├── Modules/                 # IModule
+│   ├── Contracts/<Module>/      # What a module offers the others: *Api interfaces, info records, integration events, seed ids
+│   ├── Common/                  # Result/Error, Guard, Dates, Entity
+│   ├── Security/                # ICurrentUser, Policies, JwtOptions
+│   └── Web/                     # ApiControllerBase, ProblemDetails mapping, MVC registration
+└── Bob1.Modules.<Name>/         # One class library per module; references Bob1.Shared only
+    ├── <Name>Module.cs          # DI registration, migrations + dev seed
+    ├── Domain/                  # Entities (internal)
+    ├── Application/             # Services, handlers, event handlers, implementation of the module's *Api contract
+    ├── Infrastructure/          # <Name>DbContext, Migrations/, external services (FCM, JWT...)
+    └── Api/                     # MVC controllers + request/response records
+```
+Modules never reference each other. They talk through `Bob1.Shared/Contracts/<Module>` (interface + DTOs, resolved by DI
+at runtime) or domain events. Each module owns one DbContext, its own `__EFMigrationsHistory_<Module>` table, and never
+queries another module's tables (SQLite has no schemas, so isolation is by DbContext and table ownership).
 
 ## Modules and their dependencies
 ```
@@ -42,7 +64,9 @@ Club ◄── Identity ◄── Notifications ◄──┐
 | Notifications | FCM device tokens, in-app notification list, push (Firebase), admin broadcast |
 | Ranking | points ledger, scoring rules, leaderboard, penalties |
 
-Rules: a module exposes its `*Module` class and `Public/` types; everything else is `internal`.
+Rules: a module exposes only its `*Module` class; everything else is `internal`. What other modules may use lives in `Bob1.Shared/Contracts/<Module>`.
+HTTP endpoints are MVC controllers (`Features/*Controller.cs`, deriving from `ApiControllerBase`). They stay `internal` too:
+`AddModuleControllers` (SharedKernel) registers each module assembly and a feature provider that accepts internal controllers.
 Modules never touch each other's tables: they call `Public` interfaces or react to domain events
 (`PresenceConfirmed`, `SlotJoined/Left`, `RideOffered/Cancelled`, `MatchCancelled`).
 
