@@ -6,11 +6,9 @@ namespace Bob1.Shared;
 /// <summary>Every module exposes exactly this to the host.</summary>
 public interface IModule
 {
-    string Name { get; }
     void Register(IServiceCollection services, IConfiguration configuration);
     /// <summary>Dev convenience: apply this module's migrations on startup.</summary>
     Task InitializeAsync(IServiceProvider services) => Task.CompletedTask;
-    WebApplication MapEndpoints(WebApplication app);
 }
 
 public static class SharedExtensions
