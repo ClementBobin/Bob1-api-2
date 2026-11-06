@@ -1,9 +1,6 @@
 @host = http://localhost:5000
 @matchId = 33333333-3333-3333-3333-333333333333
 
-### ---------- Lookups (dropdown values, any authenticated user) ----------
-# GET {{host}}/api/v1/lookups  (Authorization: Bearer <token>)
-
 ### ---------- Auth ----------
 # Seeded accounts (Development): parent@bob1.local / Parent123!   staff@bob1.local / Staff123!   admin@bob1.local / Admin123!
 # @name loginParent
