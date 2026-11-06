@@ -9,7 +9,7 @@ internal sealed record AdminFamilyDto(Guid Id, string Name, IReadOnlyList<AdminF
     IReadOnlyList<AdminFamilyChildDto> Children, DateTime CreatedAtUtc);
 internal sealed record AdminFamilyRequest(string Name);
 
-internal sealed record FamilyQuery(string? Search, int? Skip, int? Take);
+internal sealed record FamilyQuery(string? Search, bool? HasAccounts, bool? HideInactive, int? Skip, int? Take);
 
 [Route(ApiRoutes.V1 + "/admin/families")]
 [Authorize(Policy = Policies.Admin)]
@@ -19,10 +19,16 @@ internal sealed class FamiliesAdminController(IdentityDbContext db, TimeProvider
     [HttpQuery]
     public async Task<IActionResult> List([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] FamilyQuery? query, CancellationToken ct)
     {
-        query ??= new(null, null, null);
+        query ??= new(null, null, null, null, null);
         var q = db.Families.AsNoTracking();
         if (Paging.Term(query.Search) is { } s)
-            q = q.Where(f => f.Name.ToLower().Contains(s));
+            q = q.Where(f => f.Name.ToLower().Contains(s)
+                             || db.Users.Any(u => u.FamilyId == f.Id && (u.FirstName.ToLower().Contains(s) || u.LastName.ToLower().Contains(s)))
+                             || db.Children.Any(c => c.FamilyId == f.Id && c.FirstName.ToLower().Contains(s)));
+        if (query.HasAccounts is { } hasAccounts)
+            q = q.Where(f => db.Users.Any(u => u.FamilyId == f.Id) == hasAccounts);
+        if (query.HideInactive == true)
+            q = q.Where(f => !db.Users.Any(u => u.FamilyId == f.Id && !u.IsActive));
 
         var total = await q.CountAsync(ct);
         var families = await q.OrderBy(f => f.Name)
