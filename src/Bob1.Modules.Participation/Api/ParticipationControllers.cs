@@ -64,7 +64,7 @@ internal sealed class ParticipationController(ParticipationDbContext db, IMatche
     }
 
     // "Mes engagements": everything I (or my family) committed to, upcoming only.
-    [HttpGet("me/commitments")]
+    [HttpQuery("me/commitments")]
     public async Task<IActionResult> Commitments([FromServices] ICarpoolApi carpool, CancellationToken ct)
     {
         var now = clock.GetUtcNow().UtcDateTime;
@@ -97,13 +97,15 @@ internal sealed class ParticipationController(ParticipationDbContext db, IMatche
     }
 }
 
+internal sealed record OpenSlotsQuery(DateTime? From, DateTime? To);
+
 [Route(ApiRoutes.V1 + "/staff")]
 [Authorize(Policy = Policies.Staff)]
 [Tags("Staff")]
 internal sealed class StaffController(ParticipationDbContext db, IMatchesApi matches, ICurrentUser user, TimeProvider clock)
     : ApiControllerBase
 {
-    [HttpGet("assignments")]
+    [HttpQuery("assignments")]
     public async Task<IActionResult> Assignments(CancellationToken ct)
     {
         var now = clock.GetUtcNow().UtcDateTime;
@@ -118,9 +120,10 @@ internal sealed class StaffController(ParticipationDbContext db, IMatchesApi mat
     }
 
     // Matches with staff places still to fill (default: next 30 days).
-    [HttpGet("open-slots")]
-    public async Task<IActionResult> OpenSlots(DateTime? from, DateTime? to, CancellationToken ct)
+    [HttpQuery("open-slots")]
+    public async Task<IActionResult> OpenSlots([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] OpenSlotsQuery? query, CancellationToken ct)
     {
+        var (from, to) = (query?.From, query?.To);
         var now = clock.GetUtcNow().UtcDateTime;
         var fromUtc = Dates.ToUtc(from) ?? now;
         var toUtc = Dates.ToUtc(to) ?? fromUtc.AddDays(30);

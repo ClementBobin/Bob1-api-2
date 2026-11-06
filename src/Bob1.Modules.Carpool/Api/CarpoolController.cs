@@ -21,7 +21,7 @@ internal sealed class CarpoolController(CarpoolDbContext db, ICurrentUser user, 
 {
     private const int MaxRetries = 3;
 
-    [HttpGet("matches/{matchId:guid}/rides")]
+    [HttpQuery("matches/{matchId:guid}/rides")]
     public async Task<IActionResult> ListRides(Guid matchId, [FromServices] IIdentityApi identity, CancellationToken ct)
     {
         var rides = await db.Rides.AsNoTracking().Include(r => r.Bookings)

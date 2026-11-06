@@ -13,27 +13,28 @@ internal sealed record CreatePersonRequest(string Email, string FirstName, strin
 internal sealed record UpdatePersonRequest(string Email, string FirstName, string LastName, Guid? FamilyId);
 internal sealed record CreatePersonResponse(PersonDto Person, string? TemporaryPassword);
 
+internal sealed record PeopleQuery(string? Search, string? Role, bool? IsActive, int? Skip, int? Take);
+
 [Route(ApiRoutes.V1 + "/admin/people")]
 [Authorize(Policy = Policies.Admin)]
 [Tags("People (admin)")]
 internal sealed class PeopleAdminController(IdentityDbContext db, IPasswordHasher<Domain.User> hasher, ICurrentUser me, TimeProvider clock)
     : ApiControllerBase
 {
-    [HttpGet]
-    public async Task<IActionResult> List(string? search, string? role, int? skip, int? take, CancellationToken ct)
+    [HttpQuery]
+    public async Task<IActionResult> List([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] PeopleQuery? query, CancellationToken ct)
     {
+        query ??= new(null, null, null, null, null);
         var q = db.Users.AsNoTracking();
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var s = search.Trim().ToLowerInvariant();
+        if (Paging.Term(query.Search) is { } s)
             q = q.Where(u => u.Email.Contains(s) || u.FirstName.ToLower().Contains(s) || u.LastName.ToLower().Contains(s));
-        }
-        if (!string.IsNullOrWhiteSpace(role) && Enum.TryParse<UserRoles>(role, true, out var r) && r != UserRoles.None)
+        if (!string.IsNullOrWhiteSpace(query.Role) && Enum.TryParse<UserRoles>(query.Role, true, out var r) && r != UserRoles.None)
             q = q.Where(u => (u.Roles & r) == r);
+        if (query.IsActive is { } active) q = q.Where(u => u.IsActive == active);
 
         var total = await q.CountAsync(ct);
         var rows = await q.OrderBy(u => u.LastName).ThenBy(u => u.FirstName)
-            .Skip(Math.Max(0, skip ?? 0)).Take(Math.Clamp(take ?? 50, 1, 200)).ToListAsync(ct);
+            .Skip(Paging.Skip(query.Skip)).Take(Paging.Take(query.Take, 50, 200)).ToListAsync(ct);
 
         return Ok(new
         {

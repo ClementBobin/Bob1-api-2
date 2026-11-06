@@ -12,9 +12,9 @@ internal sealed class RankingAdminController(RankingDbContext db, IIdentityApi i
     : ApiControllerBase
 {
     // Person (or family) rankings (admin view, bigger page)
-    [HttpGet("rankings")]
-    public async Task<IActionResult> Rankings(string? category, string? season, string? view, CancellationToken ct) =>
-        Ok(await RankingBuilders.BuildAsync(view, category, season, 500, db, identity, user, clock, ct));
+    [HttpQuery("rankings")]
+    public async Task<IActionResult> Rankings([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] RankingQuery? query, CancellationToken ct) =>
+        Ok(await RankingBuilders.BuildAsync(query ?? new(null, null, null, null, null, null), 50, 500, db, identity, user, clock, ct));
 
     [HttpPut("ranking-rules/{key}")]
     public async Task<IActionResult> UpdateRule(string key, UpdateRuleRequest r, CancellationToken ct)
@@ -33,17 +33,23 @@ internal sealed class RankingAdminController(RankingDbContext db, IIdentityApi i
         return Ok(new RuleDto(rule.Key, rule.Category, rule.Label, rule.Points, rule.PointsJ15, rule.PointsJ4, rule.HasJ15J4));
     }
 
-    [HttpGet("penalties")]
-    public async Task<IActionResult> Penalties(Guid? personId, string? season, CancellationToken ct)
+    [HttpQuery("penalties")]
+    public async Task<IActionResult> Penalties([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] PenaltyQuery? query, CancellationToken ct)
     {
-        var s = season ?? Season.For(clock.GetUtcNow().UtcDateTime);
+        query ??= new(null, null, null, null, null, null);
+        var s = query.Season ?? Season.For(clock.GetUtcNow().UtcDateTime);
         var q = db.PointEntries.AsNoTracking().Where(p => p.Category == "penalty" && p.Season == s);
-        if (personId is { } f) q = q.Where(p => p.PersonId == f);
+        if (query.PersonId is { } f) q = q.Where(p => p.PersonId == f);
+        if (Dates.ToUtc(query.From) is { } from) q = q.Where(p => p.CreatedAtUtc >= from);
+        if (Paging.Term(query.Search) is { } term) q = q.Where(p => p.Reason.ToLower().Contains(term));
 
-        var rows = await q.OrderByDescending(p => p.CreatedAtUtc).Take(200).ToListAsync(ct);
+        var total = await q.CountAsync(ct);
+        var rows = await q.OrderByDescending(p => p.CreatedAtUtc)
+            .Skip(Paging.Skip(query.Skip)).Take(Paging.Take(query.Take, 50, 200)).ToListAsync(ct);
         var personNames = await identity.GetPersonNamesAsync(rows.Select(p => p.PersonId), ct);
-        return Ok(rows.Select(p => new PenaltyDto(p.Id, p.PersonId, personNames.GetValueOrDefault(p.PersonId, "?"),
-            p.Points, p.Reason, p.MatchId, p.Season, p.CreatedAtUtc)));
+        var items = rows.Select(p => new PenaltyDto(p.Id, p.PersonId, personNames.GetValueOrDefault(p.PersonId, "?"),
+            p.Points, p.Reason, p.MatchId, p.Season, p.CreatedAtUtc)).ToList();
+        return Ok(new PagedResult<PenaltyDto>(total, items));
     }
 
     // Free-form penalty (or bonus): either reference a rule, or give points + reason.
@@ -68,22 +74,24 @@ internal sealed class RankingAdminController(RankingDbContext db, IIdentityApi i
     }
 
     // Points history - all entries for a person
-    [HttpGet("points-history")]
-    public async Task<IActionResult> PointsHistory(Guid? personId, string? category, string? season, int? skip, int? take, CancellationToken ct)
+    [HttpQuery("points-history")]
+    public async Task<IActionResult> PointsHistory([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] PointsHistoryQuery? query, CancellationToken ct)
     {
-        var s = season ?? Season.For(clock.GetUtcNow().UtcDateTime);
+        query ??= new(null, null, null, null, null, null);
+        var s = query.Season ?? Season.For(clock.GetUtcNow().UtcDateTime);
         var q = db.PointEntries.AsNoTracking().Where(p => p.Season == s);
-        if (!string.IsNullOrWhiteSpace(category)) q = q.Where(p => p.Category == category);
-        if (personId is { } f) q = q.Where(p => p.PersonId == f);
+        if (!string.IsNullOrWhiteSpace(query.Category)) q = q.Where(p => p.Category == query.Category);
+        if (query.PersonId is { } f) q = q.Where(p => p.PersonId == f);
+        if (Paging.Term(query.Search) is { } term) q = q.Where(p => p.Reason.ToLower().Contains(term));
 
         var total = await q.CountAsync(ct);
         var rows = await q.OrderByDescending(p => p.CreatedAtUtc)
-            .Skip(Math.Max(0, skip ?? 0)).Take(Math.Clamp(take ?? 100, 1, 500)).ToListAsync(ct);
+            .Skip(Paging.Skip(query.Skip)).Take(Paging.Take(query.Take, 100, 500)).ToListAsync(ct);
 
         var personNames = await identity.GetPersonNamesAsync(rows.Select(p => p.PersonId), ct);
 
         var items = rows.Select(p => new EntryDto(p.Id, p.Category, p.Points, p.Reason, p.MatchId, p.CreatedAtUtc, p.PersonId, personNames.GetValueOrDefault(p.PersonId, "?")));
-        return Ok(new { total, items });
+        return Ok(new PagedResult<EntryDto>(total, items.ToList()));
     }
 
     private async Task<IActionResult> ApplyPenaltyAsync(PenaltyRequest r, PointsService points,

@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Bob1.Modules.Notifications.Api;
 
+internal sealed record NotificationQuery(string? Search, bool? Read, int? Skip, int? Take);
+
 [Route(ApiRoutes.V1 + "/admin/notifications")]
 [Authorize(Policy = Policies.Admin)]
 [Tags("Notifications (admin)")]
@@ -25,21 +27,20 @@ internal sealed class NotificationsAdminController(NotificationsDbContext db) : 
     }
 
     // ---- List all notifications ----
-    [HttpGet]
-    public async Task<IActionResult> List(string? search, int? skip, int? take, CancellationToken ct)
+    [HttpQuery]
+    public async Task<IActionResult> List([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] NotificationQuery? query, CancellationToken ct)
     {
+        query ??= new(null, null, null, null);
         var q = db.Notifications.AsNoTracking();
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var s = search.Trim().ToLowerInvariant();
+        if (Paging.Term(query.Search) is { } s)
             q = q.Where(n => n.Title.ToLower().Contains(s) || n.Body.ToLower().Contains(s));
-        }
+        if (query.Read is { } read) q = q.Where(n => (n.ReadAtUtc != null) == read);
         var total = await q.CountAsync(ct);
         var rows = await q.OrderByDescending(n => n.CreatedAtUtc)
-            .Skip(Math.Max(0, skip ?? 0)).Take(Math.Clamp(take ?? 100, 1, 500))
+            .Skip(Paging.Skip(query.Skip)).Take(Paging.Take(query.Take, 100, 500))
             .Select(n => new NotificationDto(n.Id, n.Title, n.Body, n.DataJson, n.CreatedAtUtc, n.ReadAtUtc != null, n.ExpiresAtUtc, n.Recurring, n.Startup))
             .ToListAsync(ct);
-        return Ok(new { total, items = rows });
+        return Ok(new PagedResult<NotificationDto>(total, rows));
     }
 
     [HttpPut("{id:guid}")]

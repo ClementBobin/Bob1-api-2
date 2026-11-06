@@ -34,7 +34,7 @@ Content-Type: application/json
 @staffToken = {{loginStaff.response.body.accessToken}}
 
 ### ---------- Parent: calendar & match ----------
-GET {{host}}/api/v1/matches
+QUERY {{host}}/api/v1/matches
 Authorization: Bearer {{parentToken}}
 
 ###
@@ -43,7 +43,7 @@ Authorization: Bearer {{parentToken}}
 
 ### ---------- Parent: register child, confirm presence, join buvette ----------
 # @name getChildren
-GET {{host}}/api/v1/family/children
+QUERY {{host}}/api/v1/family/children
 Authorization: Bearer {{parentToken}}
 
 ###
@@ -76,19 +76,19 @@ Content-Type: application/json
 { "seats": 3, "departureUtc": "2026-11-10T16:30:00Z", "meetingPoint": "Place de la Mairie", "notes": "Départ à l'heure !" }
 
 ###
-GET {{host}}/api/v1/matches/{{matchId}}/rides
+QUERY {{host}}/api/v1/matches/{{matchId}}/rides
 Authorization: Bearer {{parentToken}}
 
 ### ---------- Parent: commitments, ranking, notifications ----------
-GET {{host}}/api/v1/me/commitments
+QUERY {{host}}/api/v1/me/commitments
 Authorization: Bearer {{parentToken}}
 
 ###
-GET {{host}}/api/v1/rankings
+QUERY {{host}}/api/v1/rankings
 Authorization: Bearer {{parentToken}}
 
 ###
-GET {{host}}/api/v1/rankings/me/entries
+QUERY {{host}}/api/v1/rankings/me/entries
 Authorization: Bearer {{parentToken}}
 
 ###
@@ -99,19 +99,19 @@ Content-Type: application/json
 { "token": "fcm-device-token", "platform": "android" }
 
 ###
-GET {{host}}/api/v1/notifications
+QUERY {{host}}/api/v1/notifications
 Authorization: Bearer {{parentToken}}
 
 ### ---------- Staff ----------
-GET {{host}}/api/v1/staff/open-slots
+QUERY {{host}}/api/v1/staff/open-slots
 Authorization: Bearer {{staffToken}}
 
 ###
-GET {{host}}/api/v1/staff/assignments
+QUERY {{host}}/api/v1/staff/assignments
 Authorization: Bearer {{staffToken}}
 
 ### ---------- Admin ----------
-GET {{host}}/api/v1/admin/slots/urgent
+QUERY {{host}}/api/v1/admin/slots/urgent
 Authorization: Bearer {{adminToken}}
 
 ###
@@ -119,11 +119,11 @@ GET {{host}}/api/v1/admin/matches/{{matchId}}/participation
 Authorization: Bearer {{adminToken}}
 
 ###
-GET {{host}}/api/v1/admin/ranking-rules
+QUERY {{host}}/api/v1/admin/ranking-rules
 Authorization: Bearer {{adminToken}}
 
 ###
-GET {{host}}/api/v1/ranking-rules
+QUERY {{host}}/api/v1/ranking-rules
 Authorization: Bearer {{adminToken}}
 
 ###

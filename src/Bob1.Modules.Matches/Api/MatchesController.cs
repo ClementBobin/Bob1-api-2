@@ -18,6 +18,9 @@ internal static class MatchMapping
         m.VenueName, m.StartsAtUtc, m.Status, m.HomeScore, m.AwayScore);
 }
 
+internal sealed record MatchQuery(
+    Guid? DivisionId, Guid? ChildId, DateTime? From, DateTime? To, string? Status, string? Search, int? Skip, int? Take);
+
 [Route(ApiRoutes.V1 + "/matches")]
 [Authorize]
 [Tags("Matches")]
@@ -25,9 +28,11 @@ internal sealed class MatchesController(MatchesDbContext db, IIdentityApi identi
     : ApiControllerBase
 {
     // Calendar. Filters: division, child (uses the child's division), date range. Defaults to the next 120 days.
-    [HttpGet]
-    public async Task<IActionResult> List(Guid? divisionId, Guid? childId, DateTime? from, DateTime? to, CancellationToken ct)
+    [HttpQuery]
+    public async Task<IActionResult> List([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] MatchQuery? query, CancellationToken ct)
     {
+        query ??= new(null, null, null, null, null, null, null, null);
+        var (divisionId, childId, from, to) = (query.DivisionId, query.ChildId, query.From, query.To);
         if (childId is { } cid)
         {
             var child = await identity.GetChildAsync(cid, ct);
@@ -43,8 +48,15 @@ internal sealed class MatchesController(MatchesDbContext db, IIdentityApi identi
         var q = db.Matches.AsNoTracking().Where(m => m.StartsAtUtc >= fromUtc && m.StartsAtUtc <= toUtc);
         if (divisionId is { } d) q = q.Where(m => m.DivisionId == d);
 
-        var rows = await q.OrderBy(m => m.StartsAtUtc).Take(300).ToListAsync(ct);
-        return Ok(rows.Select(m => m.ToDto()));
+        if (!string.IsNullOrWhiteSpace(query.Status) && Enum.TryParse<MatchStatus>(query.Status, true, out var status))
+            q = q.Where(m => m.Status == status);
+        if (Paging.Term(query.Search) is { } s)
+            q = q.Where(m => m.Opponent.ToLower().Contains(s) || m.DivisionName.ToLower().Contains(s) || m.VenueName.ToLower().Contains(s));
+
+        var total = await q.CountAsync(ct);
+        var rows = await q.OrderBy(m => m.StartsAtUtc)
+            .Skip(Paging.Skip(query.Skip)).Take(Paging.Take(query.Take, 50, 300)).ToListAsync(ct);
+        return Ok(new PagedResult<MatchDto>(total, rows.Select(m => m.ToDto()).ToList()));
     }
 
     [HttpGet("{matchId:guid}")]
