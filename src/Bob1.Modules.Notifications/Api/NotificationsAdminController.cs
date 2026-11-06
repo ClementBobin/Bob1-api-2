@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Bob1.Modules.Notifications.Api;
 
-internal sealed record NotificationQuery(string? Search, bool? Read, int? Skip, int? Take);
+internal sealed record NotificationQuery(string? Search, string? Type, bool? Read, int? Skip, int? Take);
 
 [Route(ApiRoutes.V1 + "/admin/notifications")]
 [Authorize(Policy = Policies.Admin)]
@@ -30,10 +30,18 @@ internal sealed class NotificationsAdminController(NotificationsDbContext db) : 
     [HttpQuery]
     public async Task<IActionResult> List([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] NotificationQuery? query, CancellationToken ct)
     {
-        query ??= new(null, null, null, null);
+        query ??= new(null, null, null, null, null);
         var q = db.Notifications.AsNoTracking();
         if (Paging.Term(query.Search) is { } s)
             q = q.Where(n => n.Title.ToLower().Contains(s) || n.Body.ToLower().Contains(s));
+        if (!string.IsNullOrWhiteSpace(query.Type))
+        {
+            // Type is stored in DataJson as {"type":"..."}; notifications without one are plain broadcasts.
+            var marker = $"\"type\":\"{query.Type.Trim()}\"";
+            q = query.Type.Trim() == "broadcast"
+                ? q.Where(n => n.DataJson == null || n.DataJson.Contains(marker))
+                : q.Where(n => n.DataJson != null && n.DataJson.Contains(marker));
+        }
         if (query.Read is { } read) q = q.Where(n => (n.ReadAtUtc != null) == read);
         var total = await q.CountAsync(ct);
         var rows = await q.OrderByDescending(n => n.CreatedAtUtc)
