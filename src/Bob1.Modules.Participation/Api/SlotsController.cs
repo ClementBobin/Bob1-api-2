@@ -8,6 +8,10 @@ internal sealed record SlotRequest(string Kind, string Role, int Capacity, DateT
 internal sealed record UrgentSlotDto(Guid SlotId, Guid MatchId, string MatchTitle, DateTime MatchStartsAtUtc, string Kind, string Role, int Missing);
 
 /// <summary>Join / leave (parents for Volunteer slots, staff for Staff slots; checked in the handler).</summary>
+internal sealed record UrgentQuery(int? Days, int? Skip, int? Take);
+/// <summary>Page of open slots plus the grand total of missing places (for dashboard KPIs).</summary>
+internal sealed record UrgentSlotPage(int Total, int TotalMissing, IReadOnlyList<UrgentSlotDto> Items);
+
 [Route(ApiRoutes.V1 + "/slots/{slotId:guid}/join")]
 [Authorize]
 [Tags("Participation")]
@@ -71,19 +75,22 @@ internal sealed class SlotsAdminController(ParticipationDbContext db, IMatchesAp
     }
 
     // The back-office "urgent" list: slots still open on matches starting soon.
-    [HttpGet("slots/urgent")]
-    public async Task<IActionResult> Urgent(int? days, CancellationToken ct)
+    [HttpQuery("slots/urgent")]
+    public async Task<IActionResult> Urgent([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] UrgentQuery? query, CancellationToken ct)
     {
+        query ??= new(null, null, null);
         var now = clock.GetUtcNow().UtcDateTime;
-        var upcoming = (await matches.GetStartingBetweenAsync(now, now.AddDays(Math.Clamp(days ?? 7, 1, 60)), ct))
+        var upcoming = (await matches.GetStartingBetweenAsync(now, now.AddDays(Math.Clamp(query.Days ?? 7, 1, 60)), ct))
             .ToDictionary(m => m.Id);
         var ids = upcoming.Keys.ToList();
 
         var open = await db.Slots.AsNoTracking().Where(s => ids.Contains(s.MatchId) && s.Filled < s.Capacity).ToListAsync(ct);
-        return Ok(open
+        var all = open
             .Select(s => new UrgentSlotDto(s.Id, s.MatchId, upcoming[s.MatchId].Title, upcoming[s.MatchId].StartsAtUtc,
                 s.Kind.ToString(), s.Role, s.Capacity - s.Filled))
-            .OrderBy(x => x.MatchStartsAtUtc).ThenBy(x => x.Role));
+            .OrderBy(x => x.MatchStartsAtUtc).ThenBy(x => x.Role).ToList();
+        var items = all.Skip(Paging.Skip(query.Skip)).Take(Paging.Take(query.Take, 100, 500)).ToList();
+        return Ok(new UrgentSlotPage(all.Count, all.Sum(x => x.Missing), items));
     }
 
     private static Error? Validate(SlotRequest r, out SlotKind kind)

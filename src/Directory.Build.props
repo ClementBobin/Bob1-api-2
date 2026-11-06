@@ -10,6 +10,7 @@
     <Using Include="$(MSBuildProjectName).Api" />
     <Using Include="Microsoft.AspNetCore.Builder" />
     <Using Include="Microsoft.AspNetCore.Http" />
+    <Using Include="Microsoft.AspNetCore.Mvc.ModelBinding" />
     <Using Include="Microsoft.AspNetCore.Routing" />
     <Using Include="Microsoft.EntityFrameworkCore" />
     <Using Include="Microsoft.Extensions.Configuration" />

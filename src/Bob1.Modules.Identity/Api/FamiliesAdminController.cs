@@ -9,24 +9,30 @@ internal sealed record AdminFamilyDto(Guid Id, string Name, IReadOnlyList<AdminF
     IReadOnlyList<AdminFamilyChildDto> Children, DateTime CreatedAtUtc);
 internal sealed record AdminFamilyRequest(string Name);
 
+internal sealed record FamilyQuery(string? Search, bool? HasAccounts, bool? HideInactive, int? Skip, int? Take);
+
 [Route(ApiRoutes.V1 + "/admin/families")]
 [Authorize(Policy = Policies.Admin)]
 [Tags("Families (admin)")]
 internal sealed class FamiliesAdminController(IdentityDbContext db, TimeProvider clock) : ApiControllerBase
 {
-    [HttpGet]
-    public async Task<IActionResult> List(string? search, int? skip, int? take, CancellationToken ct)
+    [HttpQuery]
+    public async Task<IActionResult> List([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] FamilyQuery? query, CancellationToken ct)
     {
+        query ??= new(null, null, null, null, null);
         var q = db.Families.AsNoTracking();
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var s = search.Trim().ToLowerInvariant();
-            q = q.Where(f => f.Name.ToLower().Contains(s));
-        }
+        if (Paging.Term(query.Search) is { } s)
+            q = q.Where(f => f.Name.ToLower().Contains(s)
+                             || db.Users.Any(u => u.FamilyId == f.Id && (u.FirstName.ToLower().Contains(s) || u.LastName.ToLower().Contains(s)))
+                             || db.Children.Any(c => c.FamilyId == f.Id && c.FirstName.ToLower().Contains(s)));
+        if (query.HasAccounts is { } hasAccounts)
+            q = q.Where(f => db.Users.Any(u => u.FamilyId == f.Id) == hasAccounts);
+        if (query.HideInactive == true)
+            q = q.Where(f => !db.Users.Any(u => u.FamilyId == f.Id && !u.IsActive));
 
         var total = await q.CountAsync(ct);
         var families = await q.OrderBy(f => f.Name)
-            .Skip(Math.Max(0, skip ?? 0)).Take(Math.Clamp(take ?? 100, 1, 300)).ToListAsync(ct);
+            .Skip(Paging.Skip(query.Skip)).Take(Paging.Take(query.Take, 100, 300)).ToListAsync(ct);
 
         var ids = families.Select(f => f.Id).ToList();
         var users = await db.Users.AsNoTracking()

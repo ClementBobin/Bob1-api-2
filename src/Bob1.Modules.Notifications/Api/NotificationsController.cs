@@ -7,6 +7,8 @@ internal sealed record PushTokenRequest(string Token, string Platform);
 internal sealed record BroadcastRequest(string Title, string Body, Guid? DivisionId, Guid? TeamId = null, DateTime? ExpiresAtUtc = null, bool Recurring = false, bool Startup = false);
 internal sealed record NotificationDto(Guid Id, string Title, string Body, string? DataJson, DateTime CreatedAtUtc, bool IsRead, DateTime? ExpiresAtUtc, bool Recurring, bool Startup);
 
+internal sealed record MyNotificationQuery(bool? UnreadOnly, int? Skip, int? Take);
+
 [Route(ApiRoutes.V1)]
 [Authorize]
 [Tags("Notifications")]
@@ -39,14 +41,15 @@ internal sealed class NotificationsController(NotificationsDbContext db, ICurren
 
     // ---- In-app notification list ----
 
-    [HttpGet("notifications")]
-    public async Task<IActionResult> List(bool? unreadOnly, int? skip, int? take, CancellationToken ct)
+    [HttpQuery("notifications")]
+    public async Task<IActionResult> List([FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] MyNotificationQuery? query, CancellationToken ct)
     {
+        query ??= new(null, null, null);
         var q = db.Notifications.AsNoTracking().Where(n => n.UserId == user.UserId);
-        if (unreadOnly == true) q = q.Where(n => n.ReadAtUtc == null);
+        if (query.UnreadOnly == true) q = q.Where(n => n.ReadAtUtc == null);
 
         var rows = await q.OrderByDescending(n => n.CreatedAtUtc)
-            .Skip(Math.Max(0, skip ?? 0)).Take(Math.Clamp(take ?? 30, 1, 100))
+            .Skip(Paging.Skip(query.Skip)).Take(Paging.Take(query.Take, 30, 100))
             .Select(n => new NotificationDto(n.Id, n.Title, n.Body, n.DataJson, n.CreatedAtUtc, n.ReadAtUtc != null, n.ExpiresAtUtc, n.Recurring, n.Startup))
             .ToListAsync(ct);
         return Ok(rows);

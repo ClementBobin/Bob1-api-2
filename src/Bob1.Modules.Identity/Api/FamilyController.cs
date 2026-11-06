@@ -47,7 +47,7 @@ internal sealed class FamilyController(IdentityDbContext db, IClubApi club, ICur
 
     // ---- Children ----
 
-    [HttpGet("children")]
+    [HttpQuery("children")]
     public async Task<IActionResult> ListChildren(CancellationToken ct)
     {
         if (user.FamilyId is not { } familyId) return Error.Forbidden("family.none", "No family.").ToProblem();

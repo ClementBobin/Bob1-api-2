@@ -72,15 +72,17 @@ Modules never touch each other's tables: they call `Public` interfaces or react 
 
 ## Endpoints (`/api/v1`)
 **Auth**: `POST /auth/register | login | refresh | logout`
-**Me**: `GET/PUT /me`, `PUT /me/password`, `POST/DELETE /me/push-tokens`, `GET /me/commitments`
-**Family** (Parent): `GET /family`, `POST /family/invitations`, `GET/POST /family/children`, `PUT/DELETE /family/children/{id}`
-**Club**: `GET /divisions | /teams | /venues`
-**Matches**: `GET /matches?divisionId=&childId=&from=&to=`, `GET /matches/{id}`, `GET /matches/{id}/participation`
+**Me**: `GET/PUT /me`, `PUT /me/password`, `POST/DELETE /me/push-tokens`, `QUERY /me/commitments`
+**Family** (Parent): `GET /family`, `POST /family/invitations`, `QUERY/POST /family/children`, `PUT/DELETE /family/children/{id}`
+**Club**: `QUERY /divisions | /teams | /venues` (body: `search`, `isActive`, `divisionId`, `skip`, `take`)
+**List endpoints use the HTTP `QUERY` method** (safe + idempotent, criteria in a JSON body). Paginated ones answer `{ "total": n, "items": [...] }`; send `skip`/`take`.
+
+**Matches**: `QUERY /matches` (body: `divisionId`, `childId`, `from`, `to`, `status`, `search`, `skip`, `take`), `GET /matches/{id}`, `GET /matches/{id}/participation`
 **Participation** (Parent): `POST/DELETE /matches/{m}/children/{c}/registration`, `POST /matches/{id}/presence/confirm`; any role: `POST/DELETE /slots/{id}/join`
-**Carpool**: `GET/POST /matches/{id}/rides`, `PUT/DELETE /rides/{id}`, `POST/DELETE /rides/{id}/booking`
-**Staff**: `GET /staff/open-slots`, `GET /staff/assignments`
-**Ranking**: `GET /rankings?category=&season=`, `GET /rankings/me/entries`, `GET /ranking-rules`
-**Notifications**: `GET /notifications`, `GET /notifications/unread-count`, `POST /notifications/{id}/read`, `POST /notifications/read-all`
+**Carpool**: `QUERY/POST /matches/{id}/rides`, `PUT/DELETE /rides/{id}`, `POST/DELETE /rides/{id}/booking`
+**Staff**: `QUERY /staff/open-slots`, `QUERY /staff/assignments`
+**Ranking**: `QUERY /rankings` (body: `category`, `season`, `view`, `search`, `skip`, `take`), `QUERY /rankings/me/entries`, `QUERY /ranking-rules`
+**Notifications**: `QUERY /notifications`, `GET /notifications/unread-count`, `POST /notifications/{id}/read`, `POST /notifications/read-all`
 **Admin**: `/admin/people` (list, roles, active), `/admin/divisions | teams | venues` (CRUD), `/admin/matches` (create, update, cancel, result),
 `/admin/matches/{id}/slots` + `/admin/slots/{id}` + `/admin/slots/urgent`, `/admin/matches/{id}/participation` (roster),
 `/admin/ranking-rules/{key}`, `/admin/rankings`, `/admin/penalties` (+ `/quick`, `/{id}/revoke`), `/admin/notifications` (broadcast)
