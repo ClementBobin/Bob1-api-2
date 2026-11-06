@@ -13,4 +13,13 @@ public static class Paging
     /// <summary>Lower-cased, trimmed search term, or null when blank.</summary>
     public static string? Term(string? search) =>
         string.IsNullOrWhiteSpace(search) ? null : search.Trim().ToLowerInvariant();
+
+    /// <summary>
+    /// "%term%" LIKE pattern with wildcards escaped (escape char is '\'): use with
+    /// <c>EF.Functions.Like(column, pattern, "\\")</c>; case-insensitive on SQLite and SQL Server.
+    /// </summary>
+    public static string? Pattern(string? search) =>
+        string.IsNullOrWhiteSpace(search)
+            ? null
+            : "%" + search.Trim().Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_") + "%";
 }

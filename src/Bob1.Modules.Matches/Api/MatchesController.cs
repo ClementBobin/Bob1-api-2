@@ -50,8 +50,10 @@ internal sealed class MatchesController(MatchesDbContext db, IIdentityApi identi
 
         if (!string.IsNullOrWhiteSpace(query.Status) && Enum.TryParse<MatchStatus>(query.Status, true, out var status))
             q = q.Where(m => m.Status == status);
-        if (Paging.Term(query.Search) is { } s)
-            q = q.Where(m => m.Opponent.ToLower().Contains(s) || m.DivisionName.ToLower().Contains(s) || m.VenueName.ToLower().Contains(s));
+        if (Paging.Pattern(query.Search) is { } like)
+            q = q.Where(m => EF.Functions.Like(m.Opponent, like, "\\")
+                             || EF.Functions.Like(m.DivisionName, like, "\\")
+                             || EF.Functions.Like(m.VenueName, like, "\\"));
 
         var total = await q.CountAsync(ct);
         var rows = await q.OrderBy(m => m.StartsAtUtc)
